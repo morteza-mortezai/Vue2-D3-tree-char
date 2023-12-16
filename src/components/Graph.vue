@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div>{{ selectedNode }}
         <svg id="svg" @contextmenu.prevent="showContext"></svg>
         <ContextMenu ref="myMenu" @context="onContext" />
     </div>
@@ -19,31 +19,25 @@ export default {
         return {
             selectedNode: null,
             graph: {
-                "name": "flare",
+                "name": "tree",
                 "children": [
                     {
-                        "name": "analytics",
+                        "name": "A",
                         "children": [
                             {
-                                "name": "cluster",
+                                "name": "B",
                                 "children": [
-                                    { "name": "AgglomerativeCluster", "size": 3938 },
+                                    { "name": "C", "size": 3938 },
                                 ]
                             },
                             {
-                                "name": "graph",
+                                "name": "H",
                                 "children": [
-                                    { "name": "BetweennessCentrality", "size": 3534 },
-                                    { "name": "LinkDistance", "size": 5731 },
-                                    { "name": "MaxFlowMinCut", "size": 7840 },
-                                    { "name": "ShortestPaths", "size": 5914 },
-                                    { "name": "SpanningTree", "size": 3416 }
+                                    { "name": "D", "size": 3534 },
+                                    { "name": "E", "size": 5731 },
+                                    { "name": "F", "size": 7840 },
                                 ]
                             },
-                            {
-                                "name": "optimization",
-                                "children": [{ "name": "AspectRatioBanker", "size": 7074 }]
-                            }
                         ]
                     }
                 ]
@@ -127,40 +121,10 @@ export default {
                 .data(root.descendants())
                 .join("g")
                 .attr("transform", d => `translate(${d.y},${d.x})`)
-            //   .on('contextmenu', (data,index) => {
-            //     var position = d3.mouse(this);
-            // d3.select('#my_custom_menu')
-            //   .style('position', 'absolute')
-            //   .style('left', position[0] + "px")
-            //   .style('top', position[1] + "px")
-            //   .style('display', 'block');
-
-            //     // createContextMenu(d, menuItems, width, height, '#graphSvg');
-
-            //     // console.log(d3.event)
-            //     // d3.event.preventDefault();
-            //     // if (d3.event.pageX || d3.event.pageY) {
-            //     //   var x = d3.event.pageX;
-            //     //   var y = d3.event.pageY;
-            //     // } else if (d3.event.clientX || d3.event.clientY) {
-            //     //   var x = d3.event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
-            //     //   var y = d3.event.clientY + document.body.scrollTop + document.documentElement.scrollTop;
-            //     // }
-
-            //     // d3.select('#action_div')
-            //     //   .style('position', 'absolute')
-            //     //   .style('left', x + 'px')
-            //     //   .style('top', y + 'px')
-            //     //   .style('display', 'block');
-
-            //     // d3.event.preventDefault();
-            //   })
-
 
             node.append("circle")
                 .attr("fill", d => d.children ? "#555" : "#999")
                 .attr("r", 5.5)
-            // .on('contextmenu', d3.contextMenu(menu))
 
             node.append("text")
                 .attr("dy", "0.31em")
@@ -171,13 +135,7 @@ export default {
                 .attr("stroke", "white");
 
             d3.selectAll("circle").on("contextmenu", (event) => {
-                // if(!event.srcElement.__data__.data){
-                //   this.$refs.menu.hide()
-                // }
-                // console.log(event.srcElement.__data__.data)
                 this.selectedNode = event.srcElement.__data__.data
-
-                // this.create(event.srcElement.__data__.data)
             })
             return svg.node();
         },
@@ -219,6 +177,7 @@ export default {
         },
         showContext(e){
             this.$refs.myMenu.show(e)
+            
         }
     },
     mounted() {

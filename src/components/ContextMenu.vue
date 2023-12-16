@@ -18,7 +18,7 @@
 <script>
 import VueContext from 'vue-context';
 export default {
-    expose: ['show'],
+    expose: ['show','hide'],
     components: {
         VueContext,
     },
@@ -33,12 +33,14 @@ export default {
     methods: {
         onContext(action) {
             this.$emit('context', action)
-            // if (option == 'Add') {
-            //     // this.$modal.show(AddModal, null, { height: 150, width: 300 }, { 'before-close': this.create });
-            // }
         },
         show(e) {
             this.$refs.menu.open(e)
+        },
+        hide() {
+            this.$nextTick( ()=>{
+                this.$refs.menu.close()
+            })
         }
     }
 }
