@@ -1,0 +1,61 @@
+<template>
+    <vue-context ref="menu">
+        <!-- class="mx-2" -->
+        <v-btn class="mx-1" @click.prevent="onContext(action.name)" v-for="action in actions" x-small fab :key="action.name"
+            :color="action.color">
+            <v-icon dark>
+                mdi-{{ action.icon }}
+            </v-icon>
+        </v-btn>
+        <!-- <li>
+            <a >Add</a>
+        </li>
+        <li>
+            <a @click.prevent="onContext($event.target.innerText)">Remove</a>
+        </li> -->
+    </vue-context>
+</template>
+<script>
+import VueContext from 'vue-context';
+export default {
+    expose: ['show'],
+    components: {
+        VueContext,
+    },
+    data() {
+        return {
+            actions: [
+                { name: 'add', icon: 'plus', color: 'primary' },
+                { name: 'remove', icon: 'minus', color: 'danger' },
+            ]
+        }
+    },
+    methods: {
+        onContext(action) {
+            this.$emit('context', action)
+            // if (option == 'Add') {
+            //     // this.$modal.show(AddModal, null, { height: 150, width: 300 }, { 'before-close': this.create });
+            // }
+        },
+        show(e) {
+            this.$refs.menu.open(e)
+        }
+    }
+}
+</script>
+<style scoped>
+.v-context {
+    position: absolute;
+    background-color: white;
+    padding: 8px;
+    list-style: none;
+    cursor: pointer;
+}
+
+/* .v-context li{
+    padding: 0 20px;
+  }
+  .v-context li:hover{
+    background-color: blue;
+  } */
+</style>
