@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import Graph from './components/Graph.vue';
+import Graph from './components/pages/Graph.vue';
 
 export default {
   name: 'App',

@@ -1,17 +1,21 @@
 <template>
-    <div>{{ selectedNode }}
+    <div>
         <svg id="svg" @contextmenu.prevent="showContext"></svg>
-        <ContextMenu ref="myMenu" @context="onContext" />
+        <ContextMenu ref="myMenu" @context="onAction" />
+
+        <button @click="test">test</button>
     </div>
 </template>
   
 <script>
-/* eslint-disable */
+// /* eslint-disable */
 import * as d3 from 'd3'
-import AddModal from './AddModal.vue';
-import ContextMenu from './ContextMenu.vue';
+import AddModal from '../partials/AddModal.vue';
+import ContextMenu from '../partials/ContextMenu.vue';
+import DuplicatedConfirmModal from '../partials/DuplicatedConfirmModal.vue'
+import RemoveConfirmModal from '../partials/RemoveConfirmModal.vue'
 export default {
-    name: 'Graph',
+    name: 'GraphPage',
     components: {
         ContextMenu
     },
@@ -28,6 +32,7 @@ export default {
                                 "name": "B",
                                 "children": [
                                     { "name": "C", "size": 3938 },
+                                    { "name": "D", "size": 3534 },
                                 ]
                             },
                             {
@@ -46,25 +51,6 @@ export default {
     },
     methods: {
         draw() {
-            var menu = [
-                {
-                    title: 'Item #1',
-                    action: function (d) {
-                        console.log('Item #1 clicked!');
-                        console.log('The data for this circle is: ' + d);
-                    },
-                    disabled: false // optional, defaults to false
-                },
-                {
-                    title: 'Item #2',
-                    action: function (d) {
-                        console.log('You have clicked the second item!');
-                        console.log('The data for this circle is: ' + d);
-                    }
-                }
-            ]
-
-            var data1 = [1, 2, 3];
             // return
             const data = this.graph
 
@@ -101,8 +87,8 @@ export default {
                 .attr("height", height)
                 .attr("viewBox", [-dy / 3, x0 - dx, width, height])
                 .attr("style", "max-width: 100%; height: auto; font: 10px sans-serif;");
-
-            const link = svg.append("g")
+            // const link =
+            svg.append("g")
                 .attr("fill", "none")
                 .attr("stroke", "#555")
                 .attr("stroke-opacity", 0.4)
@@ -139,14 +125,23 @@ export default {
             })
             return svg.node();
         },
-        onContext(action) {
+        onAction(action) {
             if (action == 'add') {
-                this.$modal.show(AddModal, null, { height: 150, width: 300 }, { 'before-close': this.create });
+                this.$modal.show(AddModal, null, { height: 150, width: 300 }, { 'before-close': this.onAdd });
+            } else if (action == 'remove') {
+                this.$modal.show(RemoveConfirmModal, null, { height: 150, width: 300 }, { 'before-close': this.onRemove });
             }
         },
-        create(event) {
+        onAdd(event) {
             const name = event.params
-            // return
+            const exist = this.reverseSearch(this.graph, name)
+            if (exist) {
+                event.cancel() // prohibit closing modal
+                return this.$modal.show(DuplicatedConfirmModal, null, { height: 175, width: 300 });
+            }
+            this.add(name)
+        },
+        add(name) {
             if (name) {
                 const found = this.reverseSearch(this.graph, this.selectedNode.name)
                 if (found.children) {
@@ -154,6 +149,21 @@ export default {
                 } else {
                     found.children = []
                     found.children.push({ name, children: [] })
+                }
+                this.refresh()
+            }
+        },
+        onRemove(event) {
+            const confirmed = event.params
+            if (confirmed) {
+                this.remove(this.selectedNode.name)
+            }
+        },
+        remove(name) {
+            if (name) {
+                const parent = this.reverseParentFinder(this.graph, this.selectedNode.name)
+                if (parent) {
+                    parent.children = parent.children.filter(item => item.name !== name)
                 }
                 this.refresh()
             }
@@ -171,13 +181,33 @@ export default {
                 }
             }
         },
+        reverseParentFinder(obj, name) {
+            if (obj.children) {
+                const found = obj.children.find(item => item.name == name)
+                if (found) {
+                    return obj
+                }
+                for (let i = 0; i < obj.children.length; i++) {
+                    const child = obj.children[i]
+                    const f = this.reverseParentFinder(child, name)
+                    if (f) {
+                        return f
+                    }
+                }
+            }
+
+        },
         refresh() {
             document.getElementById("svg").innerHTML = ""
             this.draw()
         },
-        showContext(e){
+        showContext(e) {
             this.$refs.myMenu.show(e)
-            
+
+        },
+        test() {
+            const t = this.reverseParentFinder(this.graph, 'F')
+            console.log('test', t)
         }
     },
     mounted() {
@@ -186,7 +216,5 @@ export default {
 }
 </script>
   
-<style>
-
-</style>
+<style></style>
   

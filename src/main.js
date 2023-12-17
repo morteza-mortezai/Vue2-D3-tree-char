@@ -6,7 +6,7 @@ import vuetify from './plugins/vuetify'
 // import VueContext from 'vue-context';
 
 Vue.config.productionTip = false
-Vue.use(VModal)
+Vue.use(VModal, { dialog: true })
 new Vue({
   vuetify,
 
