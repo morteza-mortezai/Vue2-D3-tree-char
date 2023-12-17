@@ -1,21 +1,21 @@
 <template>
     <v-card>
         <v-card-title class="text-h5">
-           Duplicated
+           Warnning
         </v-card-title>
 
         <v-card-text>
-          This Name exist already ,Please choose another one
+          This Node exists
         </v-card-text>
 
         <v-card-actions>
             <v-spacer></v-spacer>
 
             <v-btn color="green darken-1" text @click="$emit('close')">
-                Cancel
+                rename
             </v-btn>
 
-            <v-btn color="green darken-1"  @click="$emit('close')">
+            <v-btn color="green darken-1"  @click="$emit('close',true)">
                 OK
             </v-btn>
         </v-card-actions>

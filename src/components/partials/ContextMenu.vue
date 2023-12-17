@@ -25,8 +25,9 @@ export default {
     data() {
         return {
             actions: [
-                { name: 'add', icon: 'plus', color: 'primary' },
+                { name: 'add', icon: 'plus', color: 'success' },
                 { name: 'remove', icon: 'minus', color: 'danger' },
+                { name: 'duplicate', icon: 'content-copy', color: 'primary' },
             ]
         }
     },

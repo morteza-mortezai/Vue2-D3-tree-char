@@ -1,4 +1,5 @@
 <template>
+    <modal :name="modalName">
     <v-card>
         <v-card-title class="text-h5">
            Remove ?
@@ -20,6 +21,7 @@
             </v-btn>
         </v-card-actions>
     </v-card>
+</modal>
 </template>
 <script>
 export default {
@@ -28,7 +30,7 @@ export default {
             name: ''
         }
     },
-    props:['Name']
+    props:['Name','modalName']
 }
 </script>
 <style scoped>

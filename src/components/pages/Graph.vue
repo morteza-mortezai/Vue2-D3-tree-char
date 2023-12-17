@@ -2,45 +2,54 @@
     <div>
         <svg id="svg" @contextmenu.prevent="showContext"></svg>
         <ContextMenu ref="myMenu" @context="onAction" />
-
+        <!-- {{ graph }} -->
         <button @click="test">test</button>
+        <button @click="$modal.show('testModal')">show</button>
+        <button @click="$modal.hide('testModal')">hide</button>
+        <TestModal name="testModal" />
     </div>
 </template>
   
 <script>
 // /* eslint-disable */
+// modals must be updated
+// reversefind must be work with id
 import * as d3 from 'd3'
 import AddModal from '../partials/AddModal.vue';
 import ContextMenu from '../partials/ContextMenu.vue';
 import DuplicatedConfirmModal from '../partials/DuplicatedConfirmModal.vue'
 import RemoveConfirmModal from '../partials/RemoveConfirmModal.vue'
+import TestModal from '../partials/TestModal.vue';
 export default {
     name: 'GraphPage',
     components: {
-        ContextMenu
+        ContextMenu,
+        TestModal
     },
     data() {
         return {
             selectedNode: null,
             graph: {
                 "name": "tree",
+                "id": 1,
                 "children": [
                     {
                         "name": "A",
+                        "id": "",
                         "children": [
                             {
                                 "name": "B",
                                 "children": [
-                                    { "name": "C", "size": 3938 },
-                                    { "name": "D", "size": 3534 },
+                                    { "name": "C", "id": 3938 },
+                                    { "name": "D", "id": 3534 },
                                 ]
                             },
                             {
                                 "name": "H",
                                 "children": [
-                                    { "name": "D", "size": 3534 },
-                                    { "name": "E", "size": 5731 },
-                                    { "name": "F", "size": 7840 },
+                                    { "name": "D", "id": 3534 },
+                                    { "name": "E", "id": 5731 },
+                                    { "name": "F", "id": 7840 },
                                 ]
                             },
                         ]
@@ -116,7 +125,7 @@ export default {
                 .attr("dy", "0.31em")
                 .attr("x", d => d.children ? -6 : 6)
                 .attr("text-anchor", d => d.children ? "end" : "start")
-                .text(d => d.data.name)
+                .text(d => d.data.name + `(${d.data.id})`)
                 .clone(true).lower()
                 .attr("stroke", "white");
 
@@ -130,14 +139,24 @@ export default {
                 this.$modal.show(AddModal, null, { height: 150, width: 300 }, { 'before-close': this.onAdd });
             } else if (action == 'remove') {
                 this.$modal.show(RemoveConfirmModal, null, { height: 150, width: 300 }, { 'before-close': this.onRemove });
+            } else if (action == 'duplicate') {
+                this.duplicate()
             }
         },
         onAdd(event) {
             const name = event.params
-            const exist = this.reverseSearch(this.graph, name)
-            if (exist) {
+            const nameIsDuplicated = this.reverseSearch(this.graph, name)
+            if (nameIsDuplicated) {
                 event.cancel() // prohibit closing modal
-                return this.$modal.show(DuplicatedConfirmModal, null, { height: 175, width: 300 });
+                return this.$modal.show(DuplicatedConfirmModal, null, { height: 175, width: 300 },
+                    { 'before-close': (event)=>{
+                        const confirmed = event.params
+                        if (confirmed) {
+                            this.add(name)
+                            this.$modal.hide(DuplicatedConfirmModal)
+                        } 
+                    } }
+                );
             }
             this.add(name)
         },
@@ -205,12 +224,41 @@ export default {
             this.$refs.myMenu.show(e)
 
         },
+        duplicate() {
+            const name = this.selectedNode.name
+            if (name) {
+                try {
+                    // const node=this.reverseSearch(name)
+                    const node = this.selectedNode
+                    const nodeParent = this.reverseParentFinder(this.graph, name)
+                    const clone = structuredClone(node)
+                    nodeParent.children.push(clone)
+                    this.refresh()
+                } catch (error) {
+                    alert('something went wrong')
+                }
+            }
+
+        },
+        reverseSetId(obj, parentId, index) {
+            if (parentId) {
+                obj.id = `${parentId}-${index + 1}`
+            } else {
+                obj.id = `1`
+            }
+            if (obj.children) {
+                obj.children.forEach((child, index) => {
+                    this.reverseSetId(child, obj.id, index)
+                })
+            }
+        },
         test() {
             const t = this.reverseParentFinder(this.graph, 'F')
             console.log('test', t)
         }
     },
     mounted() {
+        this.reverseSetId(this.graph)
         this.draw()
     }
 }
