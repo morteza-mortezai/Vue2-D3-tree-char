@@ -6,8 +6,12 @@
         <button @click="test">test</button>
         <button @click="$modal.show('testModal')">show</button>
         <button @click="$modal.hide('testModal')">hide</button>
+        <div>
+            {{ selectedNode }}
+        </div>
         <TestModal name="testModal" />
         <AddModal modal-name="addModal" @onAdd="onAdd" />
+        <DuplicateModal modal-name="duplicateModal" @onAdd="onDuplicate" :node-name="selectedNode?.name" />
     </div>
 </template>
   
@@ -18,15 +22,18 @@
 import * as d3 from 'd3'
 import AddModal from '../partials/AddModal.vue';
 import ContextMenu from '../partials/ContextMenu.vue';
-import DuplicatedConfirmModal from '../partials/DuplicatedConfirmModal.vue'
+import DuplicatedNameConfirmModal from '../partials/DuplicatedNameConfirmModal.vue'
 import RemoveConfirmModal from '../partials/RemoveConfirmModal.vue'
 import TestModal from '../partials/TestModal.vue';
+import DuplicateModal from '../partials/DuplicateModal.vue'
+
 export default {
     name: 'GraphPage',
     components: {
         ContextMenu,
         TestModal,
-        AddModal
+        AddModal,
+        DuplicateModal
     },
     data() {
         return {
@@ -142,13 +149,13 @@ export default {
             } else if (action == 'remove') {
                 this.$modal.show(RemoveConfirmModal, null, { height: 150, width: 300 }, { 'before-close': this.onRemove });
             } else if (action == 'duplicate') {
-                this.duplicate()
+                this.$modal.show('duplicateModal');
             }
         },
         onAdd(name) {
             const nameIsDuplicated = this.reverseSearch(this.graph, name)
             if (nameIsDuplicated) {
-                return this.$modal.show(DuplicatedConfirmModal, null, { height: 175, width: 300 },
+                return this.$modal.show(DuplicatedNameConfirmModal, null, { height: 175, width: 300 },
                     {
                         'before-close': (event) => {
                             const confirmed = event.params
@@ -193,6 +200,42 @@ export default {
                 this.refresh()
             }
         },
+        onDuplicate(name){
+            const nameIsDuplicated = this.reverseSearch(this.graph, name)
+            if (nameIsDuplicated) {
+                return this.$modal.show(DuplicatedNameConfirmModal, null, { height: 175, width: 300 },
+                    {
+                        'before-close': (event) => {
+                            const confirmed = event.params
+                            if (confirmed) {
+                                this.duplicate(name)
+                                this.$modal.hide('duplicateModal')
+                            }
+                        }
+                    }
+                );
+            }else{
+                this.duplicate(name)
+            }
+            this.$modal.hide('duplicateModal'); 
+        },
+        duplicate(name) {
+            if (name) {
+                try {
+                    const cloned = structuredClone(this.selectedNode) // create deep clone on selected node
+                    const nodeParent = this.reverseParentFinder(this.graph, this.selectedNode.id)
+                    cloned.name=name
+                    console.log('nodeParent',nodeParent)
+                    nodeParent.children.push(cloned)
+                    this.reverseSetId(this.graph)
+                    this.refresh()
+                } catch (error) {
+                    console.log('error',error)
+                    alert('something went wrong')
+                }
+            }
+
+        },
         reverseSearch(object, name) {
             if (object.name == name) {
                 return object
@@ -229,22 +272,7 @@ export default {
         showContext(e) {
             this.$refs.myMenu.show(e)
         },
-        duplicate() {
-            const name = this.selectedNode.name
-            if (name) {
-                try {
-                    // const node=this.reverseSearch(name)
-                    const node = this.selectedNode
-                    const nodeParent = this.reverseParentFinder(this.graph, name)
-                    const clone = structuredClone(node)
-                    nodeParent.children.push(clone)
-                    this.refresh()
-                } catch (error) {
-                    alert('something went wrong')
-                }
-            }
 
-        },
         reverseSetId(obj, parentId, index) {
             if (parentId) {
                 obj.id = `${parentId}-${index + 1}`
