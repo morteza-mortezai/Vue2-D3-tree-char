@@ -1,13 +1,13 @@
 <template>
-    <modal :name="modalName" class="modal">
+    <modal :name="modalName" class="modal" height="130" width="400">
         <div class="title">cretae new node</div>
         <label>
             <span>Enter Node Name</span>
             <input type="text" v-model="name">
         </label>
         <div class="actions">
-            <button @click="$emit('close', null)">cancel</button>
-            <button @click="$emit('close', name)">add</button>
+            <button @click="$modal.hide(modalName)">cancel</button>
+            <button @click="$emit('onAdd', name)">add</button>
         </div>
     </modal>
 </template>

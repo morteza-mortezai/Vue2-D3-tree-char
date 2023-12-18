@@ -7,6 +7,7 @@
         <button @click="$modal.show('testModal')">show</button>
         <button @click="$modal.hide('testModal')">hide</button>
         <TestModal name="testModal" />
+        <AddModal modal-name="addModal" @onAdd="onAdd" />
     </div>
 </template>
   
@@ -24,7 +25,8 @@ export default {
     name: 'GraphPage',
     components: {
         ContextMenu,
-        TestModal
+        TestModal,
+        AddModal
     },
     data() {
         return {
@@ -136,53 +138,57 @@ export default {
         },
         onAction(action) {
             if (action == 'add') {
-                this.$modal.show(AddModal, null, { height: 150, width: 300 }, { 'before-close': this.onAdd });
+                this.$modal.show('addModal');
             } else if (action == 'remove') {
                 this.$modal.show(RemoveConfirmModal, null, { height: 150, width: 300 }, { 'before-close': this.onRemove });
             } else if (action == 'duplicate') {
                 this.duplicate()
             }
         },
-        onAdd(event) {
-            const name = event.params
+        onAdd(name) {
             const nameIsDuplicated = this.reverseSearch(this.graph, name)
             if (nameIsDuplicated) {
-                event.cancel() // prohibit closing modal
                 return this.$modal.show(DuplicatedConfirmModal, null, { height: 175, width: 300 },
-                    { 'before-close': (event)=>{
-                        const confirmed = event.params
-                        if (confirmed) {
-                            this.add(name)
-                            this.$modal.hide(DuplicatedConfirmModal)
-                        } 
-                    } }
+                    {
+                        'before-close': (event) => {
+                            const confirmed = event.params
+                            if (confirmed) {
+                                this.add(name)
+                                this.$modal.hide('addModal')
+                            }
+                        }
+                    }
                 );
+            }else{
+                this.add(name)
             }
-            this.add(name)
+            this.$modal.hide('addModal');
         },
         add(name) {
             if (name) {
-                const found = this.reverseSearch(this.graph, this.selectedNode.name)
-                if (found.children) {
-                    found.children.push({ name, children: [] })
+                const parent = this.reverseSearch(this.graph, this.selectedNode.name)
+                if (parent.children) {
+                    parent.children.push({ name,id:"" ,children: [] })
                 } else {
-                    found.children = []
-                    found.children.push({ name, children: [] })
+                    parent.children = []
+                    parent.children.push({ name,id:"", children: [] })
                 }
+      
+                this.reverseSetId(this.graph)
                 this.refresh()
             }
         },
         onRemove(event) {
             const confirmed = event.params
             if (confirmed) {
-                this.remove(this.selectedNode.name)
+                this.remove(this.selectedNode.id)
             }
         },
-        remove(name) {
-            if (name) {
-                const parent = this.reverseParentFinder(this.graph, this.selectedNode.name)
+        remove(id) {
+            if (id) {
+                const parent = this.reverseParentFinder(this.graph, this.selectedNode.id)
                 if (parent) {
-                    parent.children = parent.children.filter(item => item.name !== name)
+                    parent.children = parent.children.filter(item => item.id !== id)
                 }
                 this.refresh()
             }
@@ -200,15 +206,15 @@ export default {
                 }
             }
         },
-        reverseParentFinder(obj, name) {
+        reverseParentFinder(obj, id) {
             if (obj.children) {
-                const found = obj.children.find(item => item.name == name)
+                const found = obj.children.find(item => item.id == id)
                 if (found) {
                     return obj
                 }
                 for (let i = 0; i < obj.children.length; i++) {
                     const child = obj.children[i]
-                    const f = this.reverseParentFinder(child, name)
+                    const f = this.reverseParentFinder(child, id)
                     if (f) {
                         return f
                     }
@@ -222,7 +228,6 @@ export default {
         },
         showContext(e) {
             this.$refs.myMenu.show(e)
-
         },
         duplicate() {
             const name = this.selectedNode.name

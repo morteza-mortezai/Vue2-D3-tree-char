@@ -1,27 +1,27 @@
 <template>
-    <modal :name="modalName">
-    <v-card>
-        <v-card-title class="text-h5">
-           Remove ?
-        </v-card-title>
+    <div>
+        <v-card>
+            <v-card-title class="text-h5">
+                Remove ?
+            </v-card-title>
 
-        <v-card-text>
-          Are You Sure to Remove Node {{ name }} ?>
-        </v-card-text>
+            <v-card-text>
+                Are You Sure to Remove Node {{ name }} ?>
+            </v-card-text>
 
-        <v-card-actions>
-            <v-spacer></v-spacer>
+            <v-card-actions>
+                <v-spacer></v-spacer>
 
-            <v-btn color="danger" text @click="$emit('close')">
-                No
-            </v-btn>
+                <v-btn color="danger" text @click="$emit('close')">
+                    No
+                </v-btn>
 
-            <v-btn color="success"  @click="$emit('close',true)">
-                Yes
-            </v-btn>
-        </v-card-actions>
-    </v-card>
-</modal>
+                <v-btn color="success" @click="$emit('close', true)">
+                    Yes
+                </v-btn>
+            </v-card-actions>
+        </v-card>
+    </div>
 </template>
 <script>
 export default {
@@ -30,7 +30,7 @@ export default {
             name: ''
         }
     },
-    props:['Name','modalName']
+    props: ['Name']
 }
 </script>
 <style scoped>
