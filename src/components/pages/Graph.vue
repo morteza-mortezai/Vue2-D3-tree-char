@@ -7,11 +7,12 @@
         <button @click="$modal.show('testModal')">show</button>
         <button @click="$modal.hide('testModal')">hide</button>
         <div>
-            {{ selectedNode }}
+            <!-- {{ selectedNode }} -->
         </div>
         <TestModal name="testModal" />
         <AddModal modal-name="addModal" @onAdd="onAdd" />
         <DuplicateModal modal-name="duplicateModal" @onAdd="onDuplicate" :node-name="selectedNode?.name" />
+        <moveModal modal-name="moveModal" :node-name="selectedNode?.name" :graph="graph" />
     </div>
 </template>
   
@@ -26,6 +27,7 @@ import DuplicatedNameConfirmModal from '../partials/DuplicatedNameConfirmModal.v
 import RemoveConfirmModal from '../partials/RemoveConfirmModal.vue'
 import TestModal from '../partials/TestModal.vue';
 import DuplicateModal from '../partials/DuplicateModal.vue'
+import moveModal from '../partials/moveModal.vue';
 
 export default {
     name: 'GraphPage',
@@ -33,7 +35,8 @@ export default {
         ContextMenu,
         TestModal,
         AddModal,
-        DuplicateModal
+        DuplicateModal,
+        moveModal
     },
     data() {
         return {
@@ -134,7 +137,7 @@ export default {
                 .attr("dy", "0.31em")
                 .attr("x", d => d.children ? -6 : 6)
                 .attr("text-anchor", d => d.children ? "end" : "start")
-                .text(d => d.data.name + `(${d.data.id})`)
+                .text(d => d.data.name )
                 .clone(true).lower()
                 .attr("stroke", "white");
 
@@ -150,6 +153,8 @@ export default {
                 this.$modal.show(RemoveConfirmModal, null, { height: 150, width: 300 }, { 'before-close': this.onRemove });
             } else if (action == 'duplicate') {
                 this.$modal.show('duplicateModal');
+            } else if (action == 'move') {
+                this.$modal.show('moveModal');
             }
         },
         onAdd(name) {

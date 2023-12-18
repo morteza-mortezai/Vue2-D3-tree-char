@@ -20,7 +20,7 @@ export default {
     },
     props:['modalName']
 }
-</script>
+</script> 
 <style scoped>
 .modal {
     box-sizing: border-box;

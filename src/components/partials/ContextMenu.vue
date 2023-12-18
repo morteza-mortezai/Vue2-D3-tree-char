@@ -26,8 +26,9 @@ export default {
         return {
             actions: [
                 { name: 'add', icon: 'plus', color: 'success' },
-                { name: 'remove', icon: 'minus', color: 'danger' },
+                { name: 'remove', icon: 'minus', color: 'error' },
                 { name: 'duplicate', icon: 'content-copy', color: 'primary' },
+                { name: 'move', icon: 'open-in-new', color: 'warning' },
             ]
         }
     },
