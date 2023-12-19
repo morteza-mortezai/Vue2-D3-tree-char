@@ -41,33 +41,7 @@ export default {
     data() {
         return {
             selectedNode: null,
-            graph: {
-                "name": "tree",
-                "id": 1,
-                "children": [
-                    {
-                        "name": "A",
-                        "id": "",
-                        "children": [
-                            {
-                                "name": "B",
-                                "children": [
-                                    { "name": "C", "id": 3938 },
-                                    { "name": "D", "id": 3534 },
-                                ]
-                            },
-                            {
-                                "name": "H",
-                                "children": [
-                                    { "name": "D", "id": 3534 },
-                                    { "name": "E", "id": 5731 },
-                                    { "name": "F", "id": 7840 },
-                                ]
-                            },
-                        ]
-                    }
-                ]
-            }
+            graph: {}
         }
     },
     methods: {
@@ -137,7 +111,7 @@ export default {
                 .attr("dy", "0.31em")
                 .attr("x", d => d.children ? -6 : 6)
                 .attr("text-anchor", d => d.children ? "end" : "start")
-                .text(d => d.data.name )
+                .text(d => d.data.name)
                 .clone(true).lower()
                 .attr("stroke", "white");
 
@@ -171,7 +145,7 @@ export default {
                         }
                     }
                 );
-            }else{
+            } else {
                 this.add(name)
             }
             this.$modal.hide('addModal');
@@ -180,12 +154,12 @@ export default {
             if (name) {
                 const parent = this.reverseSearch(this.graph, this.selectedNode.name)
                 if (parent.children) {
-                    parent.children.push({ name,id:"" ,children: [] })
+                    parent.children.push({ name, id: "", children: [] })
                 } else {
                     parent.children = []
-                    parent.children.push({ name,id:"", children: [] })
+                    parent.children.push({ name, id: "", children: [] })
                 }
-      
+
                 this.reverseSetId(this.graph)
                 this.refresh()
             }
@@ -205,7 +179,7 @@ export default {
                 this.refresh()
             }
         },
-        onDuplicate(name){
+        onDuplicate(name) {
             const nameIsDuplicated = this.reverseSearch(this.graph, name)
             if (nameIsDuplicated) {
                 return this.$modal.show(DuplicatedNameConfirmModal, null, { height: 175, width: 300 },
@@ -219,17 +193,17 @@ export default {
                         }
                     }
                 );
-            }else{
+            } else {
                 this.duplicate(name)
             }
-            this.$modal.hide('duplicateModal'); 
+            this.$modal.hide('duplicateModal');
         },
         duplicate(name) {
             if (name) {
                 try {
                     const cloned = structuredClone(this.selectedNode) // create deep clone on selected node
                     const nodeParent = this.reverseParentFinder(this.graph, this.selectedNode.id)
-                    cloned.name=name
+                    cloned.name = name
                     // console.log('nodeParent',nodeParent)
                     nodeParent.children.push(cloned)
                     this.reverseSetId(this.graph)
@@ -306,10 +280,10 @@ export default {
             const t = this.reverseParentFinder(this.graph, 'F')
             console.log('test', t)
         },
-        move(target_node_id){
+        move(target_node_id) {
             try {
-                const target_node=this.searchById(this.graph,target_node_id)
-                const selected=structuredClone(this.selectedNode)
+                const target_node = this.searchById(this.graph, target_node_id)
+                const selected = structuredClone(this.selectedNode)
                 this.remove(selected.id)
                 target_node.children.push(selected)
                 this.reverseSetId(this.graph)
@@ -317,11 +291,13 @@ export default {
                 this.$modal.hide('moveModal')
             } catch (error) {
                 console.log(error)
-               alert('Something went wrong') 
+                alert('Something went wrong')
             }
         }
     },
     mounted() {
+        const currentState = this.$store.getters.lastConsistent
+        this.graph = currentState
         this.reverseSetId(this.graph)
         this.draw()
     }
