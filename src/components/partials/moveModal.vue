@@ -1,14 +1,13 @@
 <template>
-    <modal :name="modalName" class="modal" height="430" width="400">
+    <modal @opened="flat(graph)" :name="modalName" class="modal" height="430" width="400">
         <div class="title">Move node</div>
         <label>
             <span>Move Node {{ nodeName }} to :</span>
-            <v-select :items="items" label="Standard"></v-select>
-            {{ items }}
+            <v-select :items="items" label="Standard" item-text="name" item-value="id" v-model="name"></v-select>
         </label>
         <div class="actions">
             <button @click="$modal.hide(modalName)">cancel</button>
-            <button @click="$emit('onAdd', name)">add</button>
+            <button @click="$emit('onMove', name)">Move</button>
         </div>
     </modal>
 </template>
@@ -33,12 +32,6 @@ export default {
             }
         }
     },
-    watch:{
-        graph:function(new_val){
-            console.log('watch')
-            this.flat(new_val)
-        }
-    }
 }
 </script>
 <style scoped>

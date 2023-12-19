@@ -12,7 +12,7 @@
         <TestModal name="testModal" />
         <AddModal modal-name="addModal" @onAdd="onAdd" />
         <DuplicateModal modal-name="duplicateModal" @onAdd="onDuplicate" :node-name="selectedNode?.name" />
-        <moveModal modal-name="moveModal" :node-name="selectedNode?.name" :graph="graph" />
+        <moveModal modal-name="moveModal" :node-name="selectedNode?.name" @onMove="move" :graph="graph" />
     </div>
 </template>
   
@@ -230,12 +230,12 @@ export default {
                     const cloned = structuredClone(this.selectedNode) // create deep clone on selected node
                     const nodeParent = this.reverseParentFinder(this.graph, this.selectedNode.id)
                     cloned.name=name
-                    console.log('nodeParent',nodeParent)
+                    // console.log('nodeParent',nodeParent)
                     nodeParent.children.push(cloned)
                     this.reverseSetId(this.graph)
                     this.refresh()
                 } catch (error) {
-                    console.log('error',error)
+                    // console.log('error',error)
                     alert('something went wrong')
                 }
             }
@@ -249,6 +249,19 @@ export default {
                     for (let i = 0; i < object.children.length; i++) {
                         const child = object.children[i]
                         const found = this.reverseSearch(child, name)
+                        if (found) return found
+                    }
+                }
+            }
+        },
+        searchById(object, id) {
+            if (object.id == id) {
+                return object
+            } else {
+                if (object.children) {
+                    for (let i = 0; i < object.children.length; i++) {
+                        const child = object.children[i]
+                        const found = this.searchById(child, id)
                         if (found) return found
                     }
                 }
@@ -277,7 +290,6 @@ export default {
         showContext(e) {
             this.$refs.myMenu.show(e)
         },
-
         reverseSetId(obj, parentId, index) {
             if (parentId) {
                 obj.id = `${parentId}-${index + 1}`
@@ -293,6 +305,20 @@ export default {
         test() {
             const t = this.reverseParentFinder(this.graph, 'F')
             console.log('test', t)
+        },
+        move(target_node_id){
+            try {
+                const target_node=this.searchById(this.graph,target_node_id)
+                const selected=structuredClone(this.selectedNode)
+                this.remove(selected.id)
+                target_node.children.push(selected)
+                this.reverseSetId(this.graph)
+                this.refresh()
+                this.$modal.hide('moveModal')
+            } catch (error) {
+                console.log(error)
+               alert('Something went wrong') 
+            }
         }
     },
     mounted() {
