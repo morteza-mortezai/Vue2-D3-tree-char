@@ -1,13 +1,13 @@
 <template>
-    <div>
+    <div class="graph">
         <svg id="svg" @contextmenu.prevent="showContext"></svg>
         <ContextMenu ref="myMenu" @context="onAction" />
         <!-- {{ graph }} -->
-        <button @click="test">test</button>
-        <button @click="$modal.show('testModal')">show</button>
-        <button @click="$modal.hide('testModal')">hide</button>
-        <div>
-            <!-- {{ selectedNode }} -->
+        <div class="actions">
+            <v-btn outlined @click="onUndo" color="warning">undo</v-btn>
+            <v-btn outlined color="error">cancel</v-btn>
+            <v-btn outlined color="success">Save</v-btn>
+            <v-btn outlined color="success" @click="test">test</v-btn>
         </div>
         <TestModal name="testModal" />
         <AddModal modal-name="addModal" @onAdd="onAdd" />
@@ -41,7 +41,9 @@ export default {
     data() {
         return {
             selectedNode: null,
-            graph: {}
+            graph: {},
+            saved:true,
+            changed:true
         }
     },
     methods: {
@@ -162,6 +164,7 @@ export default {
 
                 this.reverseSetId(this.graph)
                 this.refresh()
+                this.sthHasChanged()
             }
         },
         onRemove(event) {
@@ -176,7 +179,9 @@ export default {
                 if (parent) {
                     parent.children = parent.children.filter(item => item.id !== id)
                 }
+                this.reverseSetId(this.graph)
                 this.refresh()
+                this.sthHasChanged()
             }
         },
         onDuplicate(name) {
@@ -208,6 +213,7 @@ export default {
                     nodeParent.children.push(cloned)
                     this.reverseSetId(this.graph)
                     this.refresh()
+                    this.sthHasChanged()
                 } catch (error) {
                     // console.log('error',error)
                     alert('something went wrong')
@@ -277,8 +283,8 @@ export default {
             }
         },
         test() {
-            const t = this.reverseParentFinder(this.graph, 'F')
-            console.log('test', t)
+            this.sthHasChanged()
+            console.log('test', this.$store.getters.lastTemp())
         },
         move(target_node_id) {
             try {
@@ -293,16 +299,49 @@ export default {
                 console.log(error)
                 alert('Something went wrong')
             }
-        }
+        },
+        sthHasChanged(){
+            this.$store.commit('addTempt',this.graph)
+        },
+        onUndo(){
+            this.$store.commit('removeLastTemp')
+            // let last=this.$store.getters.lastTemp
+            if(this.$store.state.temp.length>0){
+                console.log('last temp',this.$store.getters.lastTemp)
+                this.graph=this.clone(this.$store.getters.lastTemp)
+            }else{
+                console.log('last pers',this.$store.getters.lastConsistent)
+
+                this.graph=this.clone(this.$store.getters.lastConsistent)
+            }
+            this.refresh()
+        },
+        onsave(){
+
+        },
+        clone(obj){
+            return structuredClone(obj)
+        },
     },
     mounted() {
         const currentState = this.$store.getters.lastConsistent
-        this.graph = currentState
+        this.graph = this.clone(currentState)
         this.reverseSetId(this.graph)
         this.draw()
     }
 }
 </script>
   
-<style></style>
+<style scoped>
+.graph {
+    padding: 20px;
+}
+.graph .actions{
+    text-align: right;
+    margin-top: 20px;
+}
+.graph .actions .v-btn{
+    margin: 0 5px;
+}
+</style>
   

@@ -1,5 +1,4 @@
 import Vue from 'vue'
-
 import Vuex from "vuex";
 
 Vue.use(Vuex)
@@ -14,23 +13,10 @@ const store = new Vuex.Store({
           {
             name: "A",
             id: "",
-            children: [
-              {
-                name: "B",
-                children: [
-                  { name: "C", id: 3938 },
-                  { name: "D", id: 3534 },
-                ],
-              },
-              {
-                name: "H",
-                children: [
-                  { name: "D", id: 3534 },
-                  { name: "E", id: 5731 },
-                  { name: "F", id: 7840 },
-                ],
-              },
-            ],
+          },
+          {
+            name: "B",
+            id: "",
           },
         ],
       },
@@ -43,7 +29,7 @@ const store = new Vuex.Store({
     addPersistent(state, item) {
       state.persistent.push(item);
     },
-    removeLastPersistent(state) {
+    removeLastTemp(state) {
       state.temp.pop();
     },
   },
@@ -52,7 +38,7 @@ const store = new Vuex.Store({
       const i = state.persistent.lenght > 0 ? state.persistent.lenght - 1 : 0;
       return state.persistent[i];
     },
-    lastTempt(state) {
+    lastTemp(state) {
       const i = state.temp.lenght > 0 ? state.temp.lenght - 1 : 0;
       return state.temp[i];
     },
