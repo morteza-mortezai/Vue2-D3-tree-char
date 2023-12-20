@@ -4,10 +4,9 @@
         <ContextMenu ref="myMenu" @context="onAction" />
         <!-- {{ graph }} -->
         <div class="actions">
-            <v-btn outlined @click="onUndo" color="warning">undo</v-btn>
-            <v-btn outlined color="error">cancel</v-btn>
-            <v-btn outlined color="success">Save</v-btn>
-            <v-btn outlined color="success" @click="test">test</v-btn>
+            <v-btn outlined @click="onUndo" :disabled="disableUndoBtn" color="warning">undo</v-btn>
+            <v-btn outlined @click="onCancel" color="error" :disabled="disablecancelBtn">cancel</v-btn>
+            <v-btn outlined color="success" @click="onsave" :disabled="disableSaveBtn">Save</v-btn>
         </div>
         <TestModal name="testModal" />
         <AddModal modal-name="addModal" @onAdd="onAdd" />
@@ -43,7 +42,24 @@ export default {
             selectedNode: null,
             graph: {},
             saved:true,
-            changed:true
+            change:false
+        }
+    },
+    computed:{
+        disableUndoBtn(){
+            const temp=this.$store.state.temp
+            if(temp.length>0) return false
+            return true
+        },
+        disablecancelBtn(){
+            const temp=this.$store.state.temp
+            if(temp.length>0) return false
+            return true
+        },
+        disableSaveBtn(){
+            const temp=this.$store.state.temp
+            if(temp.length>0) return false
+            return true
         }
     },
     methods: {
@@ -154,17 +170,24 @@ export default {
         },
         add(name) {
             if (name) {
-                const parent = this.reverseSearch(this.graph, this.selectedNode.name)
-                if (parent.children) {
-                    parent.children.push({ name, id: "", children: [] })
-                } else {
-                    parent.children = []
-                    parent.children.push({ name, id: "", children: [] })
+                try {
+                    const previousData=structuredClone(this.graph)
+                    const parent = this.reverseSearch(this.graph, this.selectedNode.name)
+                    if (parent.children) {
+                        parent.children.push({ name, id: "", children: [] })
+                    } else {
+                        parent.children = []
+                        parent.children.push({ name, id: "", children: [] })
+                    }
+                    this.reverseSetId(this.graph)
+                    this.refresh()
+                    this.sthHasChanged(previousData)
+                    
+                } catch (error) {
+                   console.log(error) 
+                   alert('somthing went wrong')
                 }
 
-                this.reverseSetId(this.graph)
-                this.refresh()
-                this.sthHasChanged()
             }
         },
         onRemove(event) {
@@ -175,13 +198,19 @@ export default {
         },
         remove(id) {
             if (id) {
-                const parent = this.reverseParentFinder(this.graph, this.selectedNode.id)
-                if (parent) {
-                    parent.children = parent.children.filter(item => item.id !== id)
+                try {
+                    const previousData=structuredClone(this.graph)                    
+                    const parent = this.reverseParentFinder(this.graph, this.selectedNode.id)
+                    if (parent) {
+                        parent.children = parent.children.filter(item => item.id !== id)
+                    }
+                    this.reverseSetId(this.graph)
+                    this.refresh()
+                    this.sthHasChanged(previousData)
+                } catch (error) {
+                    console.log(error)
+                    alert('Error moving node')
                 }
-                this.reverseSetId(this.graph)
-                this.refresh()
-                this.sthHasChanged()
             }
         },
         onDuplicate(name) {
@@ -206,16 +235,16 @@ export default {
         duplicate(name) {
             if (name) {
                 try {
+                    const previousData=structuredClone(this.graph)                    
                     const cloned = structuredClone(this.selectedNode) // create deep clone on selected node
                     const nodeParent = this.reverseParentFinder(this.graph, this.selectedNode.id)
                     cloned.name = name
-                    // console.log('nodeParent',nodeParent)
                     nodeParent.children.push(cloned)
                     this.reverseSetId(this.graph)
                     this.refresh()
-                    this.sthHasChanged()
+                    this.sthHasChanged(previousData)
                 } catch (error) {
-                    // console.log('error',error)
+                    console.log('error',error)
                     alert('something went wrong')
                 }
             }
@@ -282,12 +311,9 @@ export default {
                 })
             }
         },
-        test() {
-            this.sthHasChanged()
-            console.log('test', this.$store.getters.lastTemp())
-        },
         move(target_node_id) {
             try {
+                const previousData=structuredClone(this.graph)
                 const target_node = this.searchById(this.graph, target_node_id)
                 const selected = structuredClone(this.selectedNode)
                 this.remove(selected.id)
@@ -297,38 +323,44 @@ export default {
                 target_node.children.push(selected)
                 this.reverseSetId(this.graph)
                 this.refresh()
+                this.sthHasChanged(previousData)
                 this.$modal.hide('moveModal')
             } catch (error) {
                 console.log(error)
                 alert('Something went wrong')
             }
         },
-        sthHasChanged(){
-            this.$store.commit('addTempt',this.graph)
+        sthHasChanged(prevoiusData){
+            this.$store.commit('addTempt',prevoiusData)
+            this.change=true
         },
         onUndo(){
-            this.$store.commit('removeLastTemp')
-            // let last=this.$store.getters.lastTemp
             if(this.$store.state.temp.length>0){
-                console.log('last temp',this.$store.getters.lastTemp)
                 this.graph=this.clone(this.$store.getters.lastTemp)
             }else{
-                console.log('last pers',this.$store.getters.lastConsistent)
-
                 this.graph=this.clone(this.$store.getters.lastConsistent)
             }
+            this.$store.commit('removeLastTemp')
             this.refresh()
         },
         onsave(){
-
+            this.$store.commit('save',this.clone(this.graph))
+            this.$store.commit('clearTemp')
+            this.refresh()
+        },
+        onCancel(){
+            const lastSaved=this.$store.getters.lastSaved
+            this.graph=this.clone(lastSaved)
+            this.$store.commit('clearTemp')
+            this.refresh()
         },
         clone(obj){
             return structuredClone(obj)
         },
     },
     mounted() {
-        const currentState = this.$store.getters.lastConsistent
-        this.graph = this.clone(currentState)
+        const lastSaved = this.$store.getters.lastSaved
+        this.graph = this.clone(lastSaved)
         this.reverseSetId(this.graph)
         this.draw()
     }

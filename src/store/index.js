@@ -1,45 +1,46 @@
-import Vue from 'vue'
+import Vue from "vue";
 import Vuex from "vuex";
 
-Vue.use(Vuex)
+Vue.use(Vuex);
 const store = new Vuex.Store({
   state: {
     temp: [],
-    persistent: [
-      {
-        name: "tree",
-        id: 1,
-        children: [
-          {
-            name: "A",
-            id: "",
-          },
-          {
-            name: "B",
-            id: "",
-          },
-        ],
-      },
-    ],
+    saved: {
+      name: "tree",
+      id: 1,
+      children: [
+        {
+          name: "A",
+          id: "",
+        },
+        {
+          name: "B",
+          id: "",
+        },
+      ],
+    },
   },
   mutations: {
     addTempt(state, item) {
       state.temp.push(item);
     },
-    addPersistent(state, item) {
-      state.persistent.push(item);
+    save(state, item) {
+      state.saved=item
     },
     removeLastTemp(state) {
       state.temp.pop();
     },
+    clearTemp(state){
+      state.temp=[]
+    }
   },
   getters: {
-    lastConsistent(state) {
-      const i = state.persistent.lenght > 0 ? state.persistent.lenght - 1 : 0;
-      return state.persistent[i];
+    lastSaved(state) {
+      // const i = state.persistent.length > 0 ? state.persistent.length - 1 : 0;
+      return state.saved
     },
     lastTemp(state) {
-      const i = state.temp.lenght > 0 ? state.temp.lenght - 1 : 0;
+      const i = state.temp.length > 0 ? state.temp.length - 1 : 0;
       return state.temp[i];
     },
   },
