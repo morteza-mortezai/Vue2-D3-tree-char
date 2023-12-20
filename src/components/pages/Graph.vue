@@ -291,6 +291,9 @@ export default {
                 const target_node = this.searchById(this.graph, target_node_id)
                 const selected = structuredClone(this.selectedNode)
                 this.remove(selected.id)
+                if(!('children' in target_node)){
+                    target_node.children=[]
+                }
                 target_node.children.push(selected)
                 this.reverseSetId(this.graph)
                 this.refresh()
