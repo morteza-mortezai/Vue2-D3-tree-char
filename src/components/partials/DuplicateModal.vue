@@ -1,5 +1,5 @@
 <template>
-    <modal :name="modalName" class="modal" height="130" width="400">
+    <modal @before-open="onOpen" :name="modalName" class="modal" height="130" width="400">
         <div class="title">Duplicate node</div>
         <label>
             <span>Duplicate Node {{ nodeName }} as :</span>
@@ -7,7 +7,7 @@
         </label>
         <div class="actions">
             <button @click="$modal.hide(modalName)">cancel</button>
-            <button @click="$emit('onAdd', name)">add</button>
+            <button @click="$emit('onAdd', name)">duplicate</button>
         </div>
     </modal>
 </template>
@@ -18,7 +18,12 @@ export default {
             name: ''
         }
     },
-    props: ['modalName','nodeName']
+    props: ['modalName','nodeName'],
+    methods:{
+        onOpen(){
+            this.name=''
+        }
+    }
 }
 </script>
 <style scoped>
