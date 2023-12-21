@@ -1,18 +1,20 @@
 <template>
     <div class="graph">
         <svg id="svg" @contextmenu.prevent="showContext"></svg>
-        <ContextMenu ref="myMenu" @context="onAction" />
         <!-- {{ graph }} -->
         <div class="actions">
             <v-btn outlined @click="onUndo" :disabled="disableUndoBtn" color="warning">undo</v-btn>
             <v-btn outlined @click="onCancel" color="error" :disabled="disablecancelBtn">cancel</v-btn>
             <v-btn outlined color="success" @click="onsave" :disabled="disableSaveBtn">Save</v-btn>
+            <v-btn outlined color="success" @click="findLinks">find links</v-btn>
         </div>
+        <ContextMenu ref="myMenu" @context="onAction" />
         <TestModal name="testModal" />
         <AddModal modal-name="addModal" @onAdd="onAdd" />
         <DuplicateModal modal-name="duplicateModal" @onAdd="onDuplicate" :node-name="selectedNode?.name" />
         <moveModal modal-name="moveModal" :node-name="selectedNode?.name" @onMove="move" :graph="graph?.data" />
         <LinkModal modal-name="linkModal" :node-name="selectedNode?.name" :graph="graph?.data" @onLink="onLink" />
+        <UnLinkModal modal-name="unlinkModal" :node-name="selectedNode?.name" :graph="graph?.data" @onUnLink="onUnLink" />
     </div>
 </template>
   
@@ -27,6 +29,7 @@ import TestModal from '../partials/TestModal.vue';
 import DuplicateModal from '../partials/DuplicateModal.vue'
 import moveModal from '../partials/moveModal.vue';
 import LinkModal from '../partials/LinkModal.vue'
+import UnLinkModal from '../partials/UnLinkModal.vue'
 
 export default {
     name: 'GraphPage',
@@ -36,7 +39,8 @@ export default {
         AddModal,
         DuplicateModal,
         moveModal,
-        LinkModal
+        LinkModal,
+        UnLinkModal
     },
     data() {
         return {
@@ -168,6 +172,8 @@ export default {
                 this.$modal.show('moveModal');
             } else if (action == 'link') {
                 this.$modal.show('linkModal');
+            } else if (action == 'unlink') {
+                this.$modal.show('unlinkModal');
             }
         },
         onAdd(name) {
@@ -391,6 +397,37 @@ export default {
             this.sthHasChanged(previousData)
             this.$modal.hide('linkModal');
         },
+        findLinks() {
+            const nodes = d3.select("svg").nodes()
+            console.log('nodes', nodes)
+        },
+        onUnLink(node_id) {
+            const previousData = structuredClone(this.graph)
+
+            console.log(node_id)
+            const selectedNodeId = this.selectedNode.id
+            const foundedLink = this.graph.links.find(item => {
+                if ((item.to == node_id && item.from == selectedNodeId) ||
+                    (item.from == node_id && item.to == selectedNodeId)) {
+                    return true
+                }
+            })
+            console.log('founded link', foundedLink)
+            if (foundedLink) {
+                const filtered = this.graph.links.filter(item => {
+                    if ((item.to !== node_id || item.from !== selectedNodeId) &&
+                        (item.from !== node_id || item.to !== selectedNodeId)) {
+                        return true
+                    }
+                })
+                this.graph.links = filtered
+            }
+
+            this.reverseSetId(this.graph.data)
+            this.refresh()
+            this.sthHasChanged(previousData)
+            this.$modal.hide('unlinkModal');
+        }
     },
     mounted() {
         const lastSaved = this.$store.getters.lastSaved

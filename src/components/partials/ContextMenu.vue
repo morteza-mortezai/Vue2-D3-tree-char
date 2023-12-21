@@ -23,7 +23,8 @@ export default {
                 { name: 'remove', icon: 'minus', color: 'error' },
                 { name: 'duplicate', icon: 'content-copy', color: 'primary' },
                 { name: 'move', icon: 'open-in-new', color: 'warning' },
-                { name: 'link', icon: 'link', color: 'green darken-1' },
+                { name: 'link', icon: 'link', color: 'primary' },
+                { name: 'unlink', icon: 'link-off', color: 'secondary' },
             ]
         }
     },
