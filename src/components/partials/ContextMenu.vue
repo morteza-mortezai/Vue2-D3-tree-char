@@ -7,12 +7,6 @@
                 mdi-{{ action.icon }}
             </v-icon>
         </v-btn>
-        <!-- <li>
-            <a >Add</a>
-        </li>
-        <li>
-            <a @click.prevent="onContext($event.target.innerText)">Remove</a>
-        </li> -->
     </vue-context>
 </template>
 <script>
@@ -29,6 +23,7 @@ export default {
                 { name: 'remove', icon: 'minus', color: 'error' },
                 { name: 'duplicate', icon: 'content-copy', color: 'primary' },
                 { name: 'move', icon: 'open-in-new', color: 'warning' },
+                { name: 'link', icon: 'link', color: 'green darken-1' },
             ]
         }
     },

@@ -5,20 +5,34 @@ Vue.use(Vuex);
 const store = new Vuex.Store({
   state: {
     temp: [],
-    saved: {
-      name: "tree",
-      id: 1,
-      children: [
-        {
-          name: "A",
-          id: "",
-        },
-        {
-          name: "B",
-          id: "",
-        },
-      ],
+    saved:{
+      data: {
+        name: "tree",
+        id: 1,
+        children: [
+          {
+            name: "A",
+            id: "",
+            children: [
+              {
+                name: "E",
+                id: "",
+              },
+              {
+                name: "F",
+                id: "",
+              },
+            ],
+          },
+          {
+            name: "B",
+            id: "",
+          },
+        ],
+      },
+      links:[]
     },
+
   },
   mutations: {
     addTempt(state, item) {
@@ -36,7 +50,6 @@ const store = new Vuex.Store({
   },
   getters: {
     lastSaved(state) {
-      // const i = state.persistent.length > 0 ? state.persistent.length - 1 : 0;
       return state.saved
     },
     lastTemp(state) {
@@ -44,11 +57,6 @@ const store = new Vuex.Store({
       return state.temp[i];
     },
   },
-  //   actions:{
-  //     undo(){
-
-  //     }
-  //   }
 });
 
 export default store;

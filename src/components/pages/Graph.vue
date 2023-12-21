@@ -11,14 +11,13 @@
         <TestModal name="testModal" />
         <AddModal modal-name="addModal" @onAdd="onAdd" />
         <DuplicateModal modal-name="duplicateModal" @onAdd="onDuplicate" :node-name="selectedNode?.name" />
-        <moveModal modal-name="moveModal" :node-name="selectedNode?.name" @onMove="move" :graph="graph" />
+        <moveModal modal-name="moveModal" :node-name="selectedNode?.name" @onMove="move" :graph="graph?.data" />
+        <LinkModal modal-name="linkModal" :node-name="selectedNode?.name" :graph="graph?.data" @onLink="onLink" />
     </div>
 </template>
   
 <script>
 // /* eslint-disable */
-// modals must be updated
-// reversefind must be work with id
 import * as d3 from 'd3'
 import AddModal from '../partials/AddModal.vue';
 import ContextMenu from '../partials/ContextMenu.vue';
@@ -27,6 +26,7 @@ import RemoveConfirmModal from '../partials/RemoveConfirmModal.vue'
 import TestModal from '../partials/TestModal.vue';
 import DuplicateModal from '../partials/DuplicateModal.vue'
 import moveModal from '../partials/moveModal.vue';
+import LinkModal from '../partials/LinkModal.vue'
 
 export default {
     name: 'GraphPage',
@@ -35,37 +35,37 @@ export default {
         TestModal,
         AddModal,
         DuplicateModal,
-        moveModal
+        moveModal,
+        LinkModal
     },
     data() {
         return {
             selectedNode: null,
-            graph: {},
-            saved:true,
-            change:false
+            graph: null,
         }
     },
-    computed:{
-        disableUndoBtn(){
-            const temp=this.$store.state.temp
-            if(temp.length>0) return false
+    computed: {
+        disableUndoBtn() {
+            const temp = this.$store.state.temp
+            if (temp.length > 0) return false
             return true
         },
-        disablecancelBtn(){
-            const temp=this.$store.state.temp
-            if(temp.length>0) return false
+        disablecancelBtn() {
+            const temp = this.$store.state.temp
+            if (temp.length > 0) return false
             return true
         },
-        disableSaveBtn(){
-            const temp=this.$store.state.temp
-            if(temp.length>0) return false
+        disableSaveBtn() {
+            const temp = this.$store.state.temp
+            if (temp.length > 0) return false
             return true
         }
     },
     methods: {
         draw() {
             // return
-            const data = this.graph
+            const data = this.graph.data
+            const links = this.graph.links
 
             const width = 928;
 
@@ -100,12 +100,14 @@ export default {
                 .attr("height", height)
                 .attr("viewBox", [-dy / 3, x0 - dx, width, height])
                 .attr("style", "max-width: 100%; height: auto; font: 10px sans-serif;");
-            // const link =
-            svg.append("g")
+
+            const link = svg.append("g")
                 .attr("fill", "none")
                 .attr("stroke", "#555")
                 .attr("stroke-opacity", 0.4)
                 .attr("stroke-width", 1.5)
+
+            link
                 .selectAll()
                 .data(root.links())
                 .join("path")
@@ -135,8 +137,25 @@ export default {
 
             d3.selectAll("circle").on("contextmenu", (event) => {
                 this.selectedNode = event.srcElement.__data__.data
+            });
+
+            const connectNodes = (t, f) => {
+                let to = null, fr = null;
+                node.each(d => {
+                    if (d.data.id === t) to = d;
+                    if (d.data.id === f) fr = d;
+                });
+                if (to && fr) {
+                    link.append("path")
+                        .attr("d", "M" + to.y + "," + to.x + "L" + fr.y + "," + fr.x)
+                        .attr("fill", "none")
+                        .attr("stroke", "red");
+                }
+            };
+            links.forEach(item => {
+                connectNodes(item.to, item.from);
             })
-            return svg.node();
+
         },
         onAction(action) {
             if (action == 'add') {
@@ -147,10 +166,12 @@ export default {
                 this.$modal.show('duplicateModal');
             } else if (action == 'move') {
                 this.$modal.show('moveModal');
+            } else if (action == 'link') {
+                this.$modal.show('linkModal');
             }
         },
         onAdd(name) {
-            const nameIsDuplicated = this.reverseSearch(this.graph, name)
+            const nameIsDuplicated = this.reverseSearch(this.graph.data, name)
             if (nameIsDuplicated) {
                 return this.$modal.show(DuplicatedNameConfirmModal, null, { height: 175, width: 300 },
                     {
@@ -171,21 +192,21 @@ export default {
         add(name) {
             if (name) {
                 try {
-                    const previousData=structuredClone(this.graph)
-                    const parent = this.reverseSearch(this.graph, this.selectedNode.name)
+                    const previousData = structuredClone(this.graph)
+                    const parent = this.reverseSearch(this.graph.data, this.selectedNode.name)
                     if (parent.children) {
                         parent.children.push({ name, id: "", children: [] })
                     } else {
                         parent.children = []
                         parent.children.push({ name, id: "", children: [] })
                     }
-                    this.reverseSetId(this.graph)
+                    this.reverseSetId(this.graph.data)
                     this.refresh()
                     this.sthHasChanged(previousData)
-                    
+
                 } catch (error) {
-                   console.log(error) 
-                   alert('somthing went wrong')
+                    console.log(error)
+                    alert('somthing went wrong')
                 }
 
             }
@@ -199,12 +220,12 @@ export default {
         remove(id) {
             if (id) {
                 try {
-                    const previousData=structuredClone(this.graph)                    
-                    const parent = this.reverseParentFinder(this.graph, this.selectedNode.id)
+                    const previousData = structuredClone(this.graph)
+                    const parent = this.reverseParentFinder(this.graph.data, this.selectedNode.id)
                     if (parent) {
                         parent.children = parent.children.filter(item => item.id !== id)
                     }
-                    this.reverseSetId(this.graph)
+                    this.reverseSetId(this.graph.data)
                     this.refresh()
                     this.sthHasChanged(previousData)
                 } catch (error) {
@@ -214,7 +235,7 @@ export default {
             }
         },
         onDuplicate(name) {
-            const nameIsDuplicated = this.reverseSearch(this.graph, name)
+            const nameIsDuplicated = this.reverseSearch(this.graph.data, name)
             if (nameIsDuplicated) {
                 return this.$modal.show(DuplicatedNameConfirmModal, null, { height: 175, width: 300 },
                     {
@@ -235,16 +256,16 @@ export default {
         duplicate(name) {
             if (name) {
                 try {
-                    const previousData=structuredClone(this.graph)                    
+                    const previousData = structuredClone(this.graph)
                     const cloned = structuredClone(this.selectedNode) // create deep clone on selected node
-                    const nodeParent = this.reverseParentFinder(this.graph, this.selectedNode.id)
+                    const nodeParent = this.reverseParentFinder(this.graph.data, this.selectedNode.id)
                     cloned.name = name
                     nodeParent.children.push(cloned)
-                    this.reverseSetId(this.graph)
+                    this.reverseSetId(this.graph.data)
                     this.refresh()
                     this.sthHasChanged(previousData)
                 } catch (error) {
-                    console.log('error',error)
+                    console.log('error', error)
                     alert('something went wrong')
                 }
             }
@@ -294,6 +315,7 @@ export default {
         },
         refresh() {
             document.getElementById("svg").innerHTML = ""
+            this.selectedNode = null
             this.draw()
         },
         showContext(e) {
@@ -313,15 +335,15 @@ export default {
         },
         move(target_node_id) {
             try {
-                const previousData=structuredClone(this.graph)
-                const target_node = this.searchById(this.graph, target_node_id)
+                const previousData = structuredClone(this.graph)
+                const target_node = this.searchById(this.graph.data, target_node_id)
                 const selected = structuredClone(this.selectedNode)
                 this.remove(selected.id)
-                if(!('children' in target_node)){
-                    target_node.children=[]
+                if (!('children' in target_node)) {
+                    target_node.children = []
                 }
                 target_node.children.push(selected)
-                this.reverseSetId(this.graph)
+                this.reverseSetId(this.graph.data)
                 this.refresh()
                 this.sthHasChanged(previousData)
                 this.$modal.hide('moveModal')
@@ -330,38 +352,50 @@ export default {
                 alert('Something went wrong')
             }
         },
-        sthHasChanged(prevoiusData){
-            this.$store.commit('addTempt',prevoiusData)
-            this.change=true
+        sthHasChanged(prevoiusData) {
+            this.$store.commit('addTempt', prevoiusData)
+            this.change = true
         },
-        onUndo(){
-            if(this.$store.state.temp.length>0){
-                this.graph=this.clone(this.$store.getters.lastTemp)
-            }else{
-                this.graph=this.clone(this.$store.getters.lastConsistent)
+        onUndo() {
+            if (this.$store.state.temp.length > 0) {
+                this.graph = this.clone(this.$store.getters.lastTemp)
+            } else {
+                this.graph = this.clone(this.$store.getters.lastSaved)
             }
+            console.log(4)
             this.$store.commit('removeLastTemp')
             this.refresh()
         },
-        onsave(){
-            this.$store.commit('save',this.clone(this.graph))
+        onsave() {
+            this.$store.commit('save', this.clone(this.graph))
             this.$store.commit('clearTemp')
             this.refresh()
         },
-        onCancel(){
-            const lastSaved=this.$store.getters.lastSaved
-            this.graph=this.clone(lastSaved)
+        onCancel() {
+            const lastSaved = this.$store.getters.lastSaved
+            this.graph = this.clone(lastSaved)
             this.$store.commit('clearTemp')
             this.refresh()
         },
-        clone(obj){
+        clone(obj) {
             return structuredClone(obj)
+        },
+        onLink(node_id) {
+            const previousData = structuredClone(this.graph)
+            const link = {
+                from: this.selectedNode.id, to: node_id
+            }
+            this.graph.links.push(link)
+            this.reverseSetId(this.graph.data)
+            this.refresh()
+            this.sthHasChanged(previousData)
+            this.$modal.hide('linkModal');
         },
     },
     mounted() {
         const lastSaved = this.$store.getters.lastSaved
         this.graph = this.clone(lastSaved)
-        this.reverseSetId(this.graph)
+        this.reverseSetId(this.graph.data)
         this.draw()
     }
 }
@@ -371,11 +405,13 @@ export default {
 .graph {
     padding: 20px;
 }
-.graph .actions{
+
+.graph .actions {
     text-align: right;
     margin-top: 20px;
 }
-.graph .actions .v-btn{
+
+.graph .actions .v-btn {
     margin: 0 5px;
 }
 </style>

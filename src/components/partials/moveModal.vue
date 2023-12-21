@@ -11,7 +11,7 @@
         </div>
     </modal>
 </template>
-<script>
+<script> 
 export default {
     data() {
         return {
