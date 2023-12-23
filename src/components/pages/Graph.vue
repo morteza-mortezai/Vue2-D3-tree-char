@@ -14,7 +14,8 @@
         <DuplicateModal modal-name="duplicateModal" @onAdd="onDuplicate" :node-name="selectedNode?.name" />
         <moveModal modal-name="moveModal" :node-name="selectedNode?.name" @onMove="move" :graph="graph?.data" />
         <LinkModal modal-name="linkModal" :node-name="selectedNode?.name" :graph="graph?.data" @onLink="onLink" />
-        <UnLinkModal modal-name="unlinkModal" :node-name="selectedNode?.name" :graph="graph?.data" @onUnLink="onUnLink" />
+        <UnLinkModal modal-name="unlinkModal" :selected-node="selectedNode" :graph="graph?.data"
+            :parents="selectedNodeParents" @onUnLink="onUnLink" />
     </div>
 </template>
   
@@ -30,7 +31,7 @@ import DuplicateModal from '../partials/DuplicateModal.vue'
 import moveModal from '../partials/moveModal.vue';
 import LinkModal from '../partials/LinkModal.vue'
 import UnLinkModal from '../partials/UnLinkModal.vue'
-
+import UnLinkConfirmModal from '../partials/UnLinkConfirmModal.vue';
 export default {
     name: 'GraphPage',
     components: {
@@ -63,6 +64,24 @@ export default {
             const temp = this.$store.state.temp
             if (temp.length > 0) return false
             return true
+        },
+        selectedNodeParents() {
+            const allParents = []
+            if (this.selectedNode?.id) {
+                const parent = this.reverseParentFinder(this.graph.data, this.selectedNode.id)
+              
+                if (parent)
+                    allParents.push(parent)
+                    const selectedNodeId=this.selectedNode.id
+                    this.graph.links.forEach(link=>{
+                        if(link.from===selectedNodeId ){
+                            allParents.push(this.searchById(this.graph.data,link.to))
+                        }else if(link.to===selectedNodeId){
+                            allParents.push(this.searchById(this.graph.data,link.from))
+                        }
+                    })
+            }
+            return allParents
         }
     },
     methods: {
@@ -160,6 +179,11 @@ export default {
                 connectNodes(item.to, item.from);
             })
 
+            const removeConnection = (t, f) => {
+                d3.select("#" + t + "-" + f).remove();
+            }
+            removeConnection("A", "E");
+
         },
         onAction(action) {
             if (action == 'add') {
@@ -173,6 +197,9 @@ export default {
             } else if (action == 'link') {
                 this.$modal.show('linkModal');
             } else if (action == 'unlink') {
+                if(this.selectedNodeParents.length<2){
+                    return  this.$modal.show(UnLinkConfirmModal, null, { height: 175, width: 300 });
+                }
                 this.$modal.show('unlinkModal');
             }
         },
@@ -325,6 +352,7 @@ export default {
             this.draw()
         },
         showContext(e) {
+            if(!this.selectedNode?.id) return
             this.$refs.myMenu.show(e)
         },
         reverseSetId(obj, parentId, index) {
@@ -404,7 +432,6 @@ export default {
         onUnLink(node_id) {
             const previousData = structuredClone(this.graph)
 
-            console.log(node_id)
             const selectedNodeId = this.selectedNode.id
             const foundedLink = this.graph.links.find(item => {
                 if ((item.to == node_id && item.from == selectedNodeId) ||
@@ -412,7 +439,7 @@ export default {
                     return true
                 }
             })
-            console.log('founded link', foundedLink)
+
             if (foundedLink) {
                 const filtered = this.graph.links.filter(item => {
                     if ((item.to !== node_id || item.from !== selectedNodeId) &&

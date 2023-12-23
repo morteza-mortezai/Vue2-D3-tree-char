@@ -30,7 +30,9 @@ const store = new Vuex.Store({
           },
         ],
       },
-      links:[]
+      links:[
+        {from:'1',to:'1-1-2'}
+      ]
     },
 
   },
