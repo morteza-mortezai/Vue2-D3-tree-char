@@ -88,36 +88,6 @@ export default {
             const data = this.graph.data
             const links = this.graph.links
             const unlinks = this.graph.unlinks
-            // const data = {
-            //     "name": "tree",
-            //     "children": [{
-            //         "name": "A",
-            //         "children": [{
-            //             "name": "B",
-            //             "children": [{
-            //                 "name": "C",
-            //                 "size": 3938
-            //             },]
-            //         },
-            //         {
-            //             "name": "H",
-            //             "children": [{
-            //                 "name": "D",
-            //                 "size": 3534
-            //             },
-            //             {
-            //                 "name": "E",
-            //                 "size": 5731
-            //             },
-            //             {
-            //                 "name": "F",
-            //                 "size": 7840
-            //             },
-            //             ]
-            //         },
-            //         ]
-            //     }]
-            // }
 
             const width = 928;
 
