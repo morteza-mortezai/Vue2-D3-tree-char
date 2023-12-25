@@ -1,5 +1,5 @@
 <template>
-    <modal @opened="flat(graph)" :name="modalName" class="modal" height="430" width="400">
+    <modal @before-open="[flat(graph),name=null]" :name="modalName" class="modal" height="430" width="400">
         <div class="title">Move node</div>
         <label>
             <span>Move Node {{ nodeName }} to :</span>
