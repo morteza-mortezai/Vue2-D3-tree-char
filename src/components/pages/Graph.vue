@@ -1,12 +1,10 @@
 <template>
     <div class="graph">
         <svg id="svg" @contextmenu.prevent="showContext"></svg>
-        <!-- {{ graph }} -->
         <div class="actions">
             <v-btn outlined @click="onUndo" :disabled="disableUndoBtn" color="warning">undo</v-btn>
             <v-btn outlined @click="onCancel" color="error" :disabled="disablecancelBtn">cancel</v-btn>
             <v-btn outlined color="success" @click="onsave" :disabled="disableSaveBtn">Save</v-btn>
-            <v-btn outlined color="success" @click="findLinks">find links</v-btn>
         </div>
         <ContextMenu ref="myMenu" @context="onAction" />
         <TestModal name="testModal" />
@@ -69,17 +67,17 @@ export default {
             const allParents = []
             if (this.selectedNode?.id) {
                 const parent = this.reverseParentFinder(this.graph.data, this.selectedNode.id)
-              
+
                 if (parent)
                     allParents.push(parent)
-                    const selectedNodeId=this.selectedNode.id
-                    this.graph.links.forEach(link=>{
-                        if(link.from===selectedNodeId ){
-                            allParents.push(this.searchById(this.graph.data,link.to))
-                        }else if(link.to===selectedNodeId){
-                            allParents.push(this.searchById(this.graph.data,link.from))
-                        }
-                    })
+                const selectedNodeId = this.selectedNode.id
+                this.graph.links.forEach(link => {
+                    if (link.from === selectedNodeId) {
+                        allParents.push(this.searchById(this.graph.data, link.to))
+                    } else if (link.to === selectedNodeId) {
+                        allParents.push(this.searchById(this.graph.data, link.from))
+                    }
+                })
             }
             return allParents
         }
@@ -89,6 +87,37 @@ export default {
             // return
             const data = this.graph.data
             const links = this.graph.links
+            const unlinks = this.graph.unlinks
+            // const data = {
+            //     "name": "tree",
+            //     "children": [{
+            //         "name": "A",
+            //         "children": [{
+            //             "name": "B",
+            //             "children": [{
+            //                 "name": "C",
+            //                 "size": 3938
+            //             },]
+            //         },
+            //         {
+            //             "name": "H",
+            //             "children": [{
+            //                 "name": "D",
+            //                 "size": 3534
+            //             },
+            //             {
+            //                 "name": "E",
+            //                 "size": 5731
+            //             },
+            //             {
+            //                 "name": "F",
+            //                 "size": 7840
+            //             },
+            //             ]
+            //         },
+            //         ]
+            //     }]
+            // }
 
             const width = 928;
 
@@ -136,7 +165,10 @@ export default {
                 .join("path")
                 .attr("d", d3.linkHorizontal()
                     .x(d => d.y)
-                    .y(d => d.x));
+                    .y(d => d.x))
+                .attr("id", d =>
+                    d.source.data.name + "-" + d.target.data.name
+                );
 
             const node = svg.append("g")
                 .attr("stroke-linejoin", "round")
@@ -163,7 +195,8 @@ export default {
             });
 
             const connectNodes = (t, f) => {
-                let to = null, fr = null;
+                let to = null,
+                    fr = null;
                 node.each(d => {
                     if (d.data.id === t) to = d;
                     if (d.data.id === f) fr = d;
@@ -171,6 +204,7 @@ export default {
                 if (to && fr) {
                     link.append("path")
                         .attr("d", "M" + to.y + "," + to.x + "L" + fr.y + "," + fr.x)
+                        .attr("id", to.data.id + "-" + fr.data.id)
                         .attr("fill", "none")
                         .attr("stroke", "red");
                 }
@@ -181,8 +215,13 @@ export default {
 
             const removeConnection = (t, f) => {
                 d3.select("#" + t + "-" + f).remove();
+                d3.select("#" + f + "-" + t).remove();
             }
-            removeConnection("A", "E");
+            unlinks.forEach(item => {
+                const to = this.searchById(this.graph.data, item.to)
+                const from = this.searchById(this.graph.data, item.from)
+                removeConnection(from.name, to.name);
+            })
 
         },
         onAction(action) {
@@ -197,8 +236,8 @@ export default {
             } else if (action == 'link') {
                 this.$modal.show('linkModal');
             } else if (action == 'unlink') {
-                if(this.selectedNodeParents.length<2){
-                    return  this.$modal.show(UnLinkConfirmModal, null, { height: 175, width: 300 });
+                if (this.selectedNodeParents.length < 2) {
+                    return this.$modal.show(UnLinkConfirmModal, null, { height: 175, width: 300 });
                 }
                 this.$modal.show('unlinkModal');
             }
@@ -352,7 +391,7 @@ export default {
             this.draw()
         },
         showContext(e) {
-            if(!this.selectedNode?.id) return
+            // if(!this.selectedNode?.id) return
             this.$refs.myMenu.show(e)
         },
         reverseSetId(obj, parentId, index) {
@@ -425,10 +464,6 @@ export default {
             this.sthHasChanged(previousData)
             this.$modal.hide('linkModal');
         },
-        findLinks() {
-            const nodes = d3.select("svg").nodes()
-            console.log('nodes', nodes)
-        },
         onUnLink(node_id) {
             const previousData = structuredClone(this.graph)
 
@@ -448,6 +483,9 @@ export default {
                     }
                 })
                 this.graph.links = filtered
+            } else {
+                console.log('unlink')
+                this.graph.unlinks.push({ to: selectedNodeId, from: node_id })
             }
 
             this.reverseSetId(this.graph.data)

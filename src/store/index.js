@@ -5,7 +5,7 @@ Vue.use(Vuex);
 const store = new Vuex.Store({
   state: {
     temp: [],
-    saved:{
+    saved: {
       data: {
         name: "tree",
         id: 1,
@@ -30,29 +30,31 @@ const store = new Vuex.Store({
           },
         ],
       },
-      links:[
-        {from:'1',to:'1-1-2'}
-      ]
+      links: [
+        { from: "1", to: "1-1-2" }
+      ],
+      unlinks: [
+        // { from: "1-1", to: "1-1-2" }
+      ],
     },
-
   },
   mutations: {
     addTempt(state, item) {
       state.temp.push(item);
     },
     save(state, item) {
-      state.saved=item
+      state.saved = item;
     },
     removeLastTemp(state) {
       state.temp.pop();
     },
-    clearTemp(state){
-      state.temp=[]
-    }
+    clearTemp(state) {
+      state.temp = [];
+    },
   },
   getters: {
     lastSaved(state) {
-      return state.saved
+      return state.saved;
     },
     lastTemp(state) {
       const i = state.temp.length > 0 ? state.temp.length - 1 : 0;
